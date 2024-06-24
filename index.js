@@ -20,9 +20,11 @@ const unknownEndpoint = (request, response, next) => {
     })
 }
 
+// Middleware
 app.use(express.json())
 app.use(requestLogger)
 app.use(cors())
+app.use(express.static('dist'))
 
 // Define the data to send back
 let notes = [
