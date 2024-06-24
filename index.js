@@ -6,6 +6,33 @@ const express = require('express')
 const cors = require('cors')
 const app = express() // Creates an express application -- express is a better interface to deal with backend dev
 
+// Mongo 
+const mongoose = require('mongoose')
+require('dotenv').config()
+
+const password = process.argv[2]
+const url = process.env.MONGODB_URL;
+// `mongodb+srv://lesterc013:${password}@cluster0.cyovdst.mongodb.net/noteApp?retryWrites=true&w=majority`
+
+mongoose.set('strictQuery',false)
+mongoose.connect(url)
+
+const noteSchema = new mongoose.Schema({
+  content: String,
+  important: Boolean,
+})
+
+// When this schema is converted to JSON, apply these transformations
+noteSchema.set('toJSON', {
+    transform: (document, returnedObject) => {
+        returnedObject.id = returnedObject._id.toString()
+        delete returnedObject._id
+        delete returnedObject.__v
+    }
+})
+
+const Note = mongoose.model('Note', noteSchema)
+
 const requestLogger = (request, response, next) => {
     console.log('Method:', request.method)
     console.log('Path:', request.path)
@@ -52,7 +79,12 @@ app.get('/', (request, response) => {
 
 app.get('/api/notes', (request, response) => {
     // Automatic transformation of JSON data
-    response.json(notes)
+    // response.json(notes)
+
+    // Using Mongo
+    Note.find({}).then(notes => {
+        response.json(notes)
+    })
 })
 
 // Define parameters in routes to handle dynamism
