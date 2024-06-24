@@ -25,7 +25,7 @@ const noteSchema = new mongoose.Schema({
 // When this schema is converted to JSON, apply these transformations
 noteSchema.set('toJSON', {
     transform: (document, returnedObject) => {
-        returnedObject.id = returnedObject._id.toString()
+        returnedObject.id = returnedObject._id.toString() // Bcos _id property is an object vs a string
         delete returnedObject._id
         delete returnedObject.__v
     }
