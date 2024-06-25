@@ -105,52 +105,65 @@ const generateID = () => {
     return maxID + 1
 }
 
-// Add new note
-app.post('/api/notes', (request, response) => {
+/**
+ * Post New Note
+ */
+app.post('/api/notes', async (request, response, next) => {
     
     // Without express.json(), the body property of the request will be undefined. 
     const body = request.body
 
-    if (!body.content) {
-        return response.status(400).json({
-            error: 'content is missing'
+    try {
+        const note = new Note ({
+            content: body.content,
+            important: body.important || false,
+            // id: generateID(), // Don't need id cos mongo auto generates
         })
+        const savedNote = await note.save()
+        response.json(savedNote)
+    } catch (error) {
+        next(error)
     }
 
     // New note is created with the Note constructor we passed in from note.js
     // Creates a Mongoose document rather than a JS object that can be saved to db
-    const note = new Note ({
-        content: body.content,
-        important: body.important || false,
-        // id: generateID(), // Don't need id cos mongo auto generates
-    })
 
     // Was previously for the notes variable set within this js file. Now need use db
     // notes = notes.concat(note)
 
     // Response is set inside the callback fn for save i.e. after Promise is resolved - only sent if operation succeeds
-    note.save()
-        .then(savedNote => {
-            response.json(savedNote)
-    })
-
 })
 
-app.put('/api/notes/:id', (request, response, next) => {
+/**
+ * Update notes
+ */
+app.put('/api/notes/:id', async (request, response, next) => {
     const body = request.body // Comes from the frontend where we already changed the important value and passed in as the body
 
-    const note = {
-        content: body.content,
-        important: body.important
+    try {
+        const note = {
+            content: body.content,
+            important: body.important
+        }
+        // Need the context: 'query' option to make validation run in the context of this query object which findByIdAndUpdate essentially does
+         const updatedNote = await Note.findByIdAndUpdate(request.params.id, note, {
+            new: true,
+            runValidators: true,
+            context: 'query'
+         })
+         response.json(updatedNote)
+    } catch (error) {
+        console.log('Error from update validation')
+        next(error)
     }
-
+    
     // Note that this method takes in a plain JS object vs a Mongoose document
     // Note 2: new: true is an optional to return the modified document vs the original one
-    Note.findByIdAndUpdate(request.params.id, note, { new: true})
-        .then(updatedNote => {
-            response.json(updatedNote)
-        })
-        .catch(error => next(error))
+    // Note.findByIdAndUpdate(request.params.id, note, { new: true})
+    // .then(updatedNote => {
+    //     response.json(updatedNote)
+    // })
+    // .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response, next) => {
@@ -170,8 +183,13 @@ const errorHandler = (error, request, response, next) => {
             error: "malformatted id"
         })
     }
+    else if (error.name === 'ValidationError') {
+        return response.status(400).send({
+            error: error.message
+        })
+    }
 
-    next(error) // If error.name !== 'CastError', then the error will be passed to Express' own error handler
+    next(error) // If error.name !== any of the above, then the error will be passed to Express' own error handler
 } 
 
 app.use(errorHandler) // Load error handlers last
