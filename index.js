@@ -2,36 +2,11 @@
 // const http = require('http')
 // require is also from CommonJS (a module formatting system) to assist us in importing the Node.js http module in this case
 
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const app = express() // Creates an express application -- express is a better interface to deal with backend dev
-
-// Mongo 
-const mongoose = require('mongoose')
-require('dotenv').config()
-
-const password = process.argv[2]
-const url = process.env.MONGODB_URL;
-// `mongodb+srv://lesterc013:${password}@cluster0.cyovdst.mongodb.net/noteApp?retryWrites=true&w=majority`
-
-mongoose.set('strictQuery',false)
-mongoose.connect(url)
-
-const noteSchema = new mongoose.Schema({
-  content: String,
-  important: Boolean,
-})
-
-// When this schema is converted to JSON, apply these transformations
-noteSchema.set('toJSON', {
-    transform: (document, returnedObject) => {
-        returnedObject.id = returnedObject._id.toString() // Bcos _id property is an object vs a string
-        delete returnedObject._id
-        delete returnedObject.__v
-    }
-})
-
-const Note = mongoose.model('Note', noteSchema)
+const Note = require('./models/note')
 
 const requestLogger = (request, response, next) => {
     console.log('Method:', request.method)
@@ -148,7 +123,7 @@ app.post('/api/notes', (request, response) => {
 
 app.use(unknownEndpoint)
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT
 app.listen(PORT , () => {
     console.log(`Server running on port ${PORT}`)
 })
