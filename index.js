@@ -62,19 +62,27 @@ app.get('/api/notes', (request, response) => {
     })
 })
 
+// Get individual note
 // Define parameters in routes to handle dynamism
 app.get('/api/notes/:id', (request, response) => {
-    // Need to typecast Number because the params is a string
-    const id = Number(request.params.id)
-    // Filter does not work because we will return an array with the note inside it
-    // I assume when I GET this route, I just want to return the note object - hence use find
-    const note = notes.find(note => note.id === id)
-    if (note) {
-        response.json(note)
-    }
-    else {
-        response.status(404).end()
-    } 
+    // Was when we didn't use db
+    // // Need to typecast Number because the params is a string
+    // const id = Number(request.params.id)
+    // // Filter does not work because we will return an array with the note inside it
+    // // I assume when I GET this route, I just want to return the note object - hence use find
+    // const note = notes.find(note => note.id === id)
+    // if (note) {
+    //     response.json(note)
+    // }
+    // else {
+    //     response.status(404).end()
+    // } 
+
+    // Note we did not parse request.params.id into Number? That is because id is saved as a string -- see note.js when we returned the _id toString
+    Note.findById(request.params.id)
+        .then(note => {
+            response.json(note)
+    })
 })
 
 // Delete request
@@ -102,24 +110,23 @@ app.post('/api/notes', (request, response) => {
         })
     }
 
-    const note = {
+    // New note is created with the Note constructor we passed in from note.js
+    const note = new Note ({
         content: body.content,
-        important: Boolean(body.important) || false,
-        id: generateID(),
-    }
+        important: body.important || false,
+        // id: generateID(), // Don't need id cos mongo auto generates
+    })
 
-    notes = notes.concat(note)
+    // Was previously for the notes variable set within this js file. Now need use db
+    // notes = notes.concat(note)
 
-    response.json(note) 
+    // Response is set inside the callback fn for save i.e. after Promise is resolved - only sent if operation succeeds
+    note.save()
+        .then(savedNote => {
+            response.json(savedNote)
+    })
+
 })
-
-// // Now that i've imported the http module, I can use its functionalities
-// const app = http.createServer((request, response) => {
-//     // Defines the response header
-//     response.writeHead(200, { 'Content-Type': 'application/json' })
-//     // Defines what to send to the user -- which could be HTML, JSON, text etc
-//     response.end(JSON.stringify(notes))
-// })
 
 app.use(unknownEndpoint)
 
