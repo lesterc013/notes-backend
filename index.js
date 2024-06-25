@@ -87,11 +87,17 @@ app.get('/api/notes/:id', (request, response, next) => {
 })
 
 // Delete request
-app.delete('/api/notes/:id', (request, response) => {
-    const id = Number(request.params.id)
-    notes = notes.filter(note => note.id !== id)
+app.delete('/api/notes/:id', (request, response, next) => {
+    // const id = Number(request.params.id)
+    // notes = notes.filter(note => note.id !== id)
 
-    response.status(204).end()
+    // response.status(204).end()
+
+    Note.findByIdAndDelete(request.params.id)
+        .then(result => {
+            response.status(204).end()
+        })
+        .catch(error => next(error))
 })
 
 const generateID = () => {
@@ -112,6 +118,7 @@ app.post('/api/notes', (request, response) => {
     }
 
     // New note is created with the Note constructor we passed in from note.js
+    // Creates a Mongoose document rather than a JS object that can be saved to db
     const note = new Note ({
         content: body.content,
         important: body.important || false,
@@ -127,6 +134,23 @@ app.post('/api/notes', (request, response) => {
             response.json(savedNote)
     })
 
+})
+
+app.put('/api/notes/:id', (request, response, next) => {
+    const body = request.body // Comes from the frontend where we already changed the important value and passed in as the body
+
+    const note = {
+        content: body.content,
+        important: body.important
+    }
+
+    // Note that this method takes in a plain JS object vs a Mongoose document
+    // Note 2: new: true is an optional to return the modified document vs the original one
+    Note.findByIdAndUpdate(request.params.id, note, { new: true})
+        .then(updatedNote => {
+            response.json(updatedNote)
+        })
+        .catch(error => next(error))
 })
 
 const unknownEndpoint = (request, response, next) => {
