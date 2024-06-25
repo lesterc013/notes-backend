@@ -16,16 +16,9 @@ const requestLogger = (request, response, next) => {
     next()
 }
 
-const unknownEndpoint = (request, response, next) => {
-    response.status(404).json({
-        'error': 'unknown endpoint'
-    })
-}
-
 // Middleware
 app.use(express.json())
 app.use(requestLogger)
-app.use(cors())
 app.use(express.static('dist'))
 
 // Define the data to send back
@@ -64,7 +57,7 @@ app.get('/api/notes', (request, response) => {
 
 // Get individual note
 // Define parameters in routes to handle dynamism
-app.get('/api/notes/:id', (request, response) => {
+app.get('/api/notes/:id', (request, response, next) => {
     // Was when we didn't use db
     // // Need to typecast Number because the params is a string
     // const id = Number(request.params.id)
@@ -81,8 +74,16 @@ app.get('/api/notes/:id', (request, response) => {
     // Note we did not parse request.params.id into Number? That is because id is saved as a string -- see note.js when we returned the _id toString
     Note.findById(request.params.id)
         .then(note => {
-            response.json(note)
-    })
+            if (note) {
+                response.json(note)
+            }
+            else {
+                response.status(404).end()
+            }
+        })
+        .catch(error => next(error)) 
+        // If next is called w/o argument, it will just move to the next middleware. But with an argument, it will move to the error handler middleware
+        // Also note that catch occurs when the Promise is rejected 
 })
 
 // Delete request
@@ -128,7 +129,28 @@ app.post('/api/notes', (request, response) => {
 
 })
 
+const unknownEndpoint = (request, response, next) => {
+    response.status(404).json({
+        'error': 'unknown endpoint'
+    })
+}
+
 app.use(unknownEndpoint)
+
+// Own custom errorHandler to handle CastError only for now
+const errorHandler = (error, request, response, next) => {
+    console.log(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({
+            error: "malformatted id"
+        })
+    }
+
+    next(error) // If error.name !== 'CastError', then the error will be passed to Express' own error handler
+} 
+
+app.use(errorHandler) // Load error handlers last
 
 const PORT = process.env.PORT
 app.listen(PORT , () => {
