@@ -56,9 +56,9 @@ notesRouter.delete('/:id', async (request, response, next) => {
   try {
     const deletedNote = await Note.findByIdAndDelete(request.params.id)
     if (deletedNote) {
-      response.json(204).end()
+      response.status(204).end()
     } else {
-      response.json(404).end()
+      response.status(404).end()
     }
   } catch (error) {
     next(error)
