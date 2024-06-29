@@ -18,15 +18,11 @@ notesRouter.get('/', async (request, response) => {
  * Get specific note by id
  */
 notesRouter.get('/:id', async (request, response, next) => {
-  try {
-    const note = await Note.findById(request.params.id)
-    if (note) {
-      response.json(note)
-    } else {
-      response.status(404).end()
-    }
-  } catch (error) {
-    next(error)
+  const note = await Note.findById(request.params.id)
+  if (note) {
+    response.json(note)
+  } else {
+    response.status(404).end()
   }
 })
 
@@ -35,33 +31,25 @@ notesRouter.get('/:id', async (request, response, next) => {
  */
 notesRouter.post('/', async (request, response, next) => {
   const body = request.body
-
-  try {
-    // Create new Mongoose Note document first, then save it
-    const note = new Note({
-      content: body.content,
-      important: body.important || false
-    })
-    const savedNote = await note.save()
-    response.status(201).json(savedNote)
-  } catch (error) {
-    next(error)
-  }
+  // Create new Mongoose Note document first, then save it
+  const note = new Note({
+    content: body.content,
+    important: body.important || false
+  })
+  const savedNote = await note.save()
+  response.status(201).json(savedNote)
 })
 
 /**
  * Delete specific note by id
  */
+// Without try and catch because imported express-async-errors library in app.js
 notesRouter.delete('/:id', async (request, response, next) => {
-  try {
-    const deletedNote = await Note.findByIdAndDelete(request.params.id)
-    if (deletedNote) {
-      response.status(204).end()
-    } else {
-      response.status(404).end()
-    }
-  } catch (error) {
-    next(error)
+  const deletedNote = await Note.findByIdAndDelete(request.params.id)
+  if (deletedNote) {
+    response.status(204).end()
+  } else {
+    response.status(404).end()
   }
 })
 
@@ -71,19 +59,15 @@ notesRouter.delete('/:id', async (request, response, next) => {
 notesRouter.put('/:id', async (request, response, next) => {
   // The updated note should have been sent via the frontend
   const body = request.body
-  try {
-    // findByIdAndUpdate expects a JS Object for the update and not a Document
-    const update = {
-      content: body.content,
-      important: body.important
-    }
-    const updatedNote = await Note.findByIdAndUpdate(request.params.id, update, {
-      new: true // To return the modified document rather than original
-    })
-    response.json(updatedNote)
-  } catch (error) {
-    next(error)
+  // findByIdAndUpdate expects a JS Object for the update and not a Document
+  const update = {
+    content: body.content,
+    important: body.important
   }
+  const updatedNote = await Note.findByIdAndUpdate(request.params.id, update, {
+    new: true // To return the modified document rather than original
+  })
+  response.json(updatedNote)
 })
 
 module.exports = notesRouter

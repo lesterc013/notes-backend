@@ -1,5 +1,6 @@
 // Initialising app as an express object
 const express = require('express')
+require('express-async-errors')
 const app = express()
 
 // Import all the required modules
