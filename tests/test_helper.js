@@ -6,7 +6,7 @@ const initialNotes = [
     important: false
   },
   {
-    content: 'Browser can only execute JS',
+    content: 'Browser can execute only Javascript',
     important: true
   }
 ]
