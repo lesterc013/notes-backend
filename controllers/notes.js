@@ -5,6 +5,7 @@
 const notesRouter = require('express').Router()
 // Import Note model created so we can use Mongoose methods in the route handling
 const Note = require('../models/note')
+const User = require('../models/user')
 
 /**
  * Get all notes
@@ -31,12 +32,22 @@ notesRouter.get('/:id', async (request, response, next) => {
  */
 notesRouter.post('/', async (request, response, next) => {
   const body = request.body
+  
+  // Can find the user who posted this note because the id should be in the request body
+  // FSO Notes used body.userId but im using user to maintain consistency with the Schema's field name of user
+  // Should work
+  const user = await User.findById(body.user)
   // Create new Mongoose Note document first, then save it
   const note = new Note({
     content: body.content,
-    important: body.important || false
+    important: body.important || false,
+    user: user.id
   })
   const savedNote = await note.save()
+  // Then need to add the savedNote OBJECT ID to this user's notes array which stored the OBJECT IDs of this user's notes
+  user.notes = user.notes.concat(savedNote._id)
+  await user.save()
+
   response.status(201).json(savedNote)
 })
 
