@@ -8,6 +8,10 @@ const noteSchema = new mongoose.Schema({
     required: true
   },
   important: Boolean,
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }
 })
 
 // When this schema is converted to JSON, apply these transformations
