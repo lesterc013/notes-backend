@@ -33,6 +33,11 @@ const errorHandler = (error, request, response, next) => {
       error: 'expected `username` to be unique'
     })
   }
+  else if (error.name === 'JsonWebTokenError') {
+    return response.status(401).json({
+      error: 'invalid token'
+    })
+  }
 
   next(error) // If error.name !== any of the above, then the error will be passed to Express' own error handler
 }
