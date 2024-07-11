@@ -7,11 +7,13 @@ loginRouter.post('/', async (request, response) => {
   const { username, password } = request.body
 
   const user = await User.findOne({ username }) // Shorthand notation within the curly -- when you have a variable with the same name as the object property. findOne returns the found document or null if not found
-  const passwordCorrect = user === null ? false : bcrypt.compare(password, user.passwordHash) // Find the bcrypt compare syntax in their readme
+
+  const passwordCorrect =
+    user === null ? false : await bcrypt.compare(password, user.passwordHash) // Find the bcrypt compare syntax in their readme
 
   if (!(user && passwordCorrect)) {
     return response.status(401).json({
-      error: 'invalid username or password'
+      error: 'invalid username or password',
     })
   }
 
@@ -19,7 +21,7 @@ loginRouter.post('/', async (request, response) => {
 
   const userJWTPayload = {
     username: user.username,
-    id: user._id
+    id: user._id,
   }
 
   const token = jwt.sign(userJWTPayload, process.env.SECRET)
@@ -27,7 +29,7 @@ loginRouter.post('/', async (request, response) => {
   response.status(200).send({
     token,
     username: user.username,
-    name: user.name
+    name: user.name,
   })
 })
 
